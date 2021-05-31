@@ -4,6 +4,14 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { RegisterLoginData } from '../../screens/RegisterLoginData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+jest.mock('react-native-uuid', () => {
+  return {
+    v4: () => {
+      return 'new-item'
+    }
+  }
+})
+
 describe('RegisterLoginData', () => {
   it('should be able to save login data on async storage', async () => {
     const spySetItem = jest.spyOn(AsyncStorage, 'setItem')
@@ -23,10 +31,7 @@ describe('RegisterLoginData', () => {
         )
       )
 
-    jest.spyOn(JSON, 'stringify')
-      .mockImplementationOnce((data) => data);
-
-    const { getByPlaceholderText, getByText } = render(
+    const { getByPlaceholderText, getByText, findByPlaceholderText } = render(
       <RegisterLoginData />
     );
 
@@ -40,30 +45,33 @@ describe('RegisterLoginData', () => {
     fireEvent.changeText(passwordInput, '123456');
     fireEvent.press(submitButton);
 
-    await waitFor(() => {
-      expect(spySetItem).toHaveBeenCalledWith(
-        '@passmanager:logins',
-        [
-          {
-            id: '0',
-            title: 'LikedIn',
-            email: 'johndoelinkedin@example.com',
-            password: '123456'
-          },
-          expect.objectContaining({
-            title: 'Rocketseat',
-            email: 'johndoe@example.com',
-            password: '123456'
-          })
-        ],
-      );
+    expect(await findByPlaceholderText("Escreva o título aqui")).toBeEmpty();
+    expect(emailInput).toBeEmpty();
+    expect(passwordInput).toBeEmpty();
 
-      expect(spyGetItem).toHaveBeenCalledWith('@passmanager:logins');
-    });
+    expect(spySetItem).toHaveBeenCalledWith(
+      '@passmanager:logins',
+      JSON.stringify([
+        {
+          id: '0',
+          title: 'LikedIn',
+          email: 'johndoelinkedin@example.com',
+          password: '123456'
+        },
+        {
+          id: 'new-item',
+          title: 'Rocketseat',
+          email: 'johndoe@example.com',
+          password: '123456'
+        }
+      ])
+    );
+
+    expect(spyGetItem).toHaveBeenCalledWith('@passmanager:logins');
   });
 
   it('should be able to show errors message on data validation', async () => {
-    const { getByPlaceholderText, getByText } = render(
+    const { getByPlaceholderText, getByText, findByText } = render(
       <RegisterLoginData />
     );
 
@@ -77,10 +85,8 @@ describe('RegisterLoginData', () => {
     fireEvent.changeText(passwordInput, '');
     fireEvent.press(submitButton);
 
-    await waitFor(() => {
-      getByText('Título é obrigatório!')
-      getByText('Email é obrigatório!')
-      getByText('Senha é obrigatória!')
-    });
+    await findByText('Título é obrigatório!')
+    getByText('Email é obrigatório!')
+    getByText('Senha é obrigatória!')
   });
 })
