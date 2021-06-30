@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { useFocusEffect } from '@react-navigation/native';
+import { useLogins } from '../../hooks/logins';
 
 import { SearchBar } from '../../components/SearchBar';
 import { LoginDataItem } from '../../components/LoginDataItem';
@@ -25,10 +27,10 @@ export function Home() {
   const [searchListData, setSearchListData] = useState<LoginListDataProps>([]);
   const [data, setData] = useState<LoginListDataProps>([]);
 
+  const {getLogins} = useLogins()
+
   async function loadData() {
-    const key = '@passmanager:logins';
-    const data = await AsyncStorage.getItem(key);
-    const loginData = data ? JSON.parse(data) : [];
+    const loginData = await getLogins();
 
     setData(loginData);
     setSearchListData(loginData);
@@ -44,7 +46,7 @@ export function Home() {
   }, []));
 
   function handleFilterLoginData(search: string) {
-    if(search.trim() === '') return;
+    if (search.trim() === '') return;
 
     const filterLogins = data.filter(login => login.title.includes(search));
 

@@ -1,11 +1,13 @@
 import React from 'react';
 import { Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import { useForm } from 'react-hook-form';
 import { RFValue } from 'react-native-responsive-fontsize';
 import * as Yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import uuid from 'react-native-uuid';
+
+import { useForm } from 'react-hook-form';
+import { useLogins } from '../../hooks/logins'
 
 import { Input } from '../../components/Form/Input';
 import { Button } from '../../components/Form/Button';
@@ -40,6 +42,7 @@ export function RegisterLoginData() {
       resolver: yupResolver(schema),
     }
   );
+  const {setLogins} = useLogins();
 
   async function handleRegister(formData: FormData) {
    try {
@@ -47,12 +50,8 @@ export function RegisterLoginData() {
       id: String(uuid.v4()),
       ...formData
     }
-    const key = '@passmanager:logins';
-    const data = await AsyncStorage.getItem(key);
-    const loginData = data ? JSON.parse(data) : []
-
-    await AsyncStorage.setItem(key, JSON.stringify([...loginData ,newLoginData]));
-
+   
+    await setLogins(newLoginData);
     reset();
    } catch (error) {
      Alert.alert('Não foi possível salvar sua senha')
